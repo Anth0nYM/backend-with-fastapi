@@ -14,7 +14,7 @@ def login(user_name: str, user_password: str):
         return {"message": "user doesn't exist"}
     else:
         user = valid_users.get(user_name)
-        if checkpw(user_password.encode(), user.passphrase.encode()):
+        if checkpw(user_password.encode(), user.passphrase.encode()): # type: ignore
             return user
         else:
             return {"message": "invalid user"}
