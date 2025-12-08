@@ -1,20 +1,44 @@
-from fastapi import FastAPI 
-from bcrypt import checkpw
+from fastapi import FastAPI, HTTPException
+import pandas as pd  # type: ignore
+from pydantic import BaseModel
 
-app = FastAPI() # you can replace app with your valid Python variable name
-valid_users: dict = dict() # For now, a simple in-memory dictionary will be used to store the valid users.
+app = FastAPI()
 
-@app.get("/c1/index")
-def index():
-    return {"message":"Welcome, Nerd!"}
+# Basemodels
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
 
-@app.get("/c1/login/") # NOTE: In the real world, sending a password directly through the URL using a GET request is considered a bad practice.
-def login(user_name: str, user_password: str):
-    if valid_users.get(user_name) is None:
-        return {"message": "user doesn't exist"}
-    else:
-        user = valid_users.get(user_name)
-        if checkpw(user_password.encode(), user.passphrase.encode()): # type: ignore
-            return user
-        else:
-            return {"message": "invalid user"}
+
+# The Read of "cRud", simple returns a statement
+@app.get("/users", status_code=200)
+def fetch_users():
+    users = pd.read_csv("data.csv").to_dict(orient="records")
+    return users
+
+
+# The Create of "Crud", create a new contend 
+@app.post("/users", status_code=201)
+def append_user(user:User):
+    try:
+        users_db = pd.read_csv("data.csv")
+    except FileNotFoundError:
+        users_db = pd.DataFrame()
+
+    new_user_df = pd.DataFrame([user.model_dump()])
+    combined_users = pd.concat([users_db, new_user_df], ignore_index=True)
+    combined_users.to_csv("data.csv", index=False)
+    return user
+
+
+'''
+# The Update of "crUd", update partially a contend
+@app.patch()
+
+# The Update of "crUd", but update all the contend
+@app.put()
+
+# The Delete of "cruD", delete a contend
+@app.delete()
+'''
